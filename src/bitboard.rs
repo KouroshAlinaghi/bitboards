@@ -56,10 +56,10 @@ pub trait Bitboardable {
     }
     
     /// Returns a bitboard with ones in given indexes.
-    fn from_indexes(indexes: Vec<u8>) -> Bitboard {
+    fn from_squares(squares: Vec<Square>) -> Bitboard {
         let mut bb = Bitboard::new();
         
-        for i in indexes {
+        for i in squares {
             bb.set(i, true);
         }
 

@@ -1,5 +1,8 @@
 #![allow(dead_code)]
 
+use super::dir::{Dir, Dir::*};
+use move_possible::*;
+
 pub type Square = u8;
 
 pub const A1: Square = 0;
@@ -112,6 +115,18 @@ pub trait Squarable {
     /// assert_eq!(A7.file_as_char(), 'A');
     /// ```
     fn file_as_char(&self) -> char;
+
+    /// Returns Some(Square) if a square in dir: dir of
+    /// self is not out of board, if it's out of board
+    /// returns None.
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// assert_eq!(A2.get(Left), None);
+    /// assert_eq!(A2.get(Up), Some(A3));
+    /// ```
+    fn get(&self, dir: &Dir) -> Option<Square>;
 }
 
 impl Squarable for Square {
@@ -146,6 +161,49 @@ impl Squarable for Square {
             _ => ' ',
         }
     }
+
+    fn get(&self, dir: &Dir) -> Option<Square> {
+        let i: i8 = *self as i8;
+        let target: i8 = match dir {
+            Up => i + 8,
+            Down => i - 8,
+            Left => i - 1,
+            Right => i + 1,
+            UpLeft => i + 7,
+            UpRight => i + 9,
+            DownLeft => i - 9,
+            DownRight => i - 7,
+        };
+
+        if is_possible(i, &dir) {
+            Some(target as u8)
+        } else {
+            None
+        }
+    }
+}
+
+mod move_possible {
+    use super::super::{square::*, dir::{Dir, Dir::*}};
+
+    pub fn is_possible(index: i8, dir: &Dir) -> bool {
+        if index < 0 || index > 63 {
+            return false
+        }
+        
+        let square: Square = index as Square;
+        // println!("{}", square);
+        match dir {
+            Up => square.rank() != 7,
+            Down => square.rank() != 0,
+            Left => square.file() != 0,
+            Right => square.file() != 7,
+            UpLeft => is_possible(index, &Left) && is_possible(index, &Up),
+            UpRight => is_possible(index, &Right) && is_possible(index, &Up),
+            DownLeft => is_possible(index, &Left) && is_possible(index, &Down),
+            DownRight => is_possible(index, &Right) && is_possible(index, &Down),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -173,5 +231,11 @@ mod tests {
         assert_eq!(A1.rank(), 0);
         assert_eq!(C3.rank(), 2);
         assert_eq!(F8.rank(), 7);
+    }
+
+    #[test]
+    fn get() {
+        assert_eq!(A2.get(&Dir::Left), None);
+        assert_eq!(A2.get(&Dir::Up), Some(A3));
     }
 }

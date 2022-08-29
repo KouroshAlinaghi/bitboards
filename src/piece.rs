@@ -2,6 +2,8 @@
 
 use super::color_side::*;
 
+pub mod piece_attacks;
+
 pub type PieceKind = u8;
 pub type Piece     = u8; // first bit shows color, other other 3
                          // bits represent piece kind.
