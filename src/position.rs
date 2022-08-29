@@ -13,3 +13,9 @@ pub struct Position {
     pub knights: Bitboard,
     pub bishops: Bitboard,
 }
+
+impl Position {
+    pub fn get_bitboard_from_side(&self, side: bool) -> Bitboard {
+        return if side { self.white_pieces } else { self.black_pieces }
+    }
+}

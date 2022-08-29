@@ -3,8 +3,8 @@ use super::position::Position;
 use super::bitboard::*;
 
 pub struct Game {
-    position: Position,
-    on_move:  usize,
+    pub position: Position,
+    pub played_moves:  usize,
 }
 
 impl Game {
@@ -22,7 +22,7 @@ impl Game {
                     kings:        0b00001000_00000000_00000000_00000000_00000000_00000000_00000000_00001000,
                     pawns:        0b00000000_11111111_00000000_00000000_00000000_00000000_11111111_00000000,
                 },                //ABCDEFGH-ABCDEFGH-ABCDEFGH-ABCDEFGH-ABCDEFGH-ABCDEFGH-ABCDEFGH-ABCDEFGH
-            on_move: 0,
+            played_moves: 0,
         }
     }
 }
@@ -44,32 +44,32 @@ impl Display for Game {
 
                 let i = r * 8 + f;
 
-                if self.position.white_pieces.at(i) == 1 {
-                    if self.position.pawns.at(i) == 1 {
+                if self.position.white_pieces.at(i) {
+                    if self.position.pawns.at(i) {
                         item = "♟";
-                    } else if self.position.bishops.at(i) == 1 {
+                    } else if self.position.bishops.at(i) {
                         item = "♝";
-                    } else if self.position.knights.at(i) == 1 {
+                    } else if self.position.knights.at(i) {
                         item = "♞";
-                    } else if self.position.rooks.at(i) == 1 {
+                    } else if self.position.rooks.at(i) {
                         item = "♜";
-                    } else if self.position.queens.at(i) == 1 {
+                    } else if self.position.queens.at(i) {
                         item = "♛";
-                    } else if self.position.kings.at(i) == 1 {
+                    } else if self.position.kings.at(i) {
                         item = "♚";
                     }
-                } else if self.position.black_pieces.at(i) == 1 {
-                    if self.position.pawns.at(i) == 1 {
+                } else if self.position.black_pieces.at(i) {
+                    if self.position.pawns.at(i) {
                         item = "♙";
-                    } else if self.position.bishops.at(i) == 1 {
+                    } else if self.position.bishops.at(i) {
                         item = "♗";
-                    } else if self.position.knights.at(i) == 1 {
+                    } else if self.position.knights.at(i) {
                         item = "♘";
-                    } else if self.position.rooks.at(i) == 1 {
+                    } else if self.position.rooks.at(i) {
                         item = "♖";
-                    } else if self.position.queens.at(i) == 1 {
+                    } else if self.position.queens.at(i) {
                         item = "♕";
-                    } else if self.position.kings.at(i) == 1 {
+                    } else if self.position.kings.at(i) {
                         item = "♔";
                     }
                 } else {
@@ -80,7 +80,7 @@ impl Display for Game {
             }
             out.push_str(" |\n +---+---+---+---+---+---+---+---+\n");
         }
-        out.push_str(format!(" On Move {}", self.on_move).as_str());
+        out.push_str(format!(" {} Moves played", self.played_moves).as_str());
 
         write!(f, "{}", out)
     }
