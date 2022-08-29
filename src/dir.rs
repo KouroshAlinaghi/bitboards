@@ -7,4 +7,12 @@ pub enum Dir {
     UpRight,
     DownLeft,
     DownRight,
+    HorseUpLeft,
+    HorseUpRight,
+    HorseRightUp,
+    HorseRightDown,
+    HorseDownRight,
+    HorseDownLeft,
+    HorseLeftDown,
+    HorseLeftUp,
 }

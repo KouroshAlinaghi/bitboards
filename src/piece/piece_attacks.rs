@@ -26,7 +26,7 @@ pub fn piece_attacks(piece_kind: PieceKind, game: Game, square: Square) -> Bitbo
         KING =>   king_attacks(&game, square, side),
         ROOK =>   rook_attacks(&game, square, side),
         QUEEN =>  queen_attacks(&game, square, side),
-        KNIGHT => king_attacks(&game, square, side),
+        KNIGHT => knight_attacks(&game, square, side),
         BISHOP => bishop_attacks(&game, square, side),
         PAWN =>   king_attacks(&game, square, side),
         _ => Bitboard::new(),
@@ -53,7 +53,11 @@ fn slider_attacks(
                         Some(piece) => {
                             if piece.color() != side {
                                 legal_squares.push(target);
-                                break;
+                                // TODO: explain why
+                                if piece.kind() != KING {
+                                    break;
+                                }
+                                square = target;
                             } else {
                                 break;
                             }
@@ -103,4 +107,26 @@ fn bishop_attacks(game: &Game, s: Square, side: ColorSide) -> Bitboard {
 
 fn queen_attacks(game: &Game, s: Square, side: ColorSide) -> Bitboard {
     rook_attacks(&game, s, side) | bishop_attacks(&game, s, side)
+}
+
+fn knight_attacks(game: &Game, s: Square, side: ColorSide) -> Bitboard {
+    let mut legal_squares: Vec<Square> = vec![];
+    for dir in [HorseUpLeft, HorseUpRight, HorseDownRight, HorseDownLeft, HorseLeftDown, HorseLeftUp, HorseRightDown, HorseRightUp] {
+        match s.get(&dir) {
+            Some(target) => {
+                match game.position.from_square(target) {
+                    None => legal_squares.push(target),
+                    Some(piece) => {
+                        println!("{side}");
+                        if piece.color() != side {
+                            legal_squares.push(target)
+                        }
+                    }
+                }
+            }
+            None => {},
+        }
+    }
+
+    Bitboard::from_squares(legal_squares)   
 }

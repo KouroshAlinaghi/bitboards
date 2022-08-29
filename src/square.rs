@@ -173,6 +173,14 @@ impl Squarable for Square {
             UpRight => i + 9,
             DownLeft => i - 9,
             DownRight => i - 7,
+            HorseUpLeft => i + 15,
+            HorseUpRight => i + 17,
+            HorseRightUp => i + 10,
+            HorseRightDown => i - 6,
+            HorseDownRight => i - 15,
+            HorseDownLeft => i - 17,
+            HorseLeftDown => i - 10,
+            HorseLeftUp => i + 6,
         };
 
         if is_possible(i, &dir) {
@@ -192,16 +200,25 @@ mod move_possible {
         }
         
         let square: Square = index as Square;
-        // println!("{}", square);
+        let Coordination(file, rank) = square.coord();
+
         match dir {
-            Up => square.rank() != 7,
-            Down => square.rank() != 0,
-            Left => square.file() != 0,
-            Right => square.file() != 7,
-            UpLeft => is_possible(index, &Left) && is_possible(index, &Up),
-            UpRight => is_possible(index, &Right) && is_possible(index, &Up),
-            DownLeft => is_possible(index, &Left) && is_possible(index, &Down),
-            DownRight => is_possible(index, &Right) && is_possible(index, &Down),
+            Up => rank != 7,
+            Down => rank != 0,
+            Left => file != 0,
+            Right => file != 7,
+            UpLeft => file != 0 && rank != 7,
+            UpRight => file != 7 && rank != 7,
+            DownLeft => file != 0 && rank != 0,
+            DownRight => file != 7 && rank != 0,
+            HorseUpLeft => rank < 6 && file != 0,
+            HorseUpRight => rank < 6 && file != 7,
+            HorseRightUp => file < 6 && file != 7,
+            HorseRightDown => file < 6 && rank != 0,
+            HorseDownRight => file != 7 && rank > 1,
+            HorseDownLeft => file != 0 && rank > 1,
+            HorseLeftDown => file > 1 && rank != 0,
+            HorseLeftUp => file > 1 && rank != 7,
         }
     }
 }
@@ -237,5 +254,31 @@ mod tests {
     fn get() {
         assert_eq!(A2.get(&Dir::Left), None);
         assert_eq!(A2.get(&Dir::Up), Some(A3));
+        assert_eq!(A2.get(&Dir::UpLeft), None);
+        assert_eq!(A2.get(&Dir::UpRight), Some(B3));
+
+        assert_eq!(A2.get(&Dir::HorseUpLeft), None);
+        assert_eq!(B6.get(&Dir::HorseUpLeft), Some(A8));
+
+        assert_eq!(H1.get(&Dir::HorseUpRight), None);
+        assert_eq!(A2.get(&Dir::HorseUpRight), Some(B4));
+
+        assert_eq!(G1.get(&Dir::HorseRightUp), None);
+        assert_eq!(A2.get(&Dir::HorseRightUp), Some(C3));
+
+        assert_eq!(G1.get(&Dir::HorseRightDown), None);
+        assert_eq!(F8.get(&Dir::HorseRightDown), Some(H7));
+
+        assert_eq!(C1.get(&Dir::HorseDownRight), None);
+        assert_eq!(G3.get(&Dir::HorseDownRight), Some(H1));
+
+        assert_eq!(C2.get(&Dir::HorseDownLeft), None);
+        assert_eq!(E8.get(&Dir::HorseDownLeft), Some(D6));
+
+        assert_eq!(H1.get(&Dir::HorseLeftDown), None);
+        assert_eq!(C3.get(&Dir::HorseLeftDown), Some(A2));
+
+        assert_eq!(G8.get(&Dir::HorseLeftUp), None);
+        assert_eq!(H1.get(&Dir::HorseLeftUp), Some(F2));
     }
 }
