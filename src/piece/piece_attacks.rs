@@ -6,6 +6,7 @@ use super::super::piece::*;
 use super::super::dir::{Dir, Dir::*};
 use super::super::color_side::*;
 
+
 // N | -A -B -C -D -E -F -G -H  | N
 // --------------------------------
 // 8 | 56 56 58 59 60 61 62 63 | 8
@@ -19,17 +20,59 @@ use super::super::color_side::*;
 // --------------------------------
 // N | -A -B -C -D -E -F -G -H  | N
 
+/// Generates attacking squares bitboard (captures) for
+/// given piece type in a given game and square. Note that
+/// this is equal to legal moves for all of the pieces, except
+/// for pawns, which have different attacking squares and 
+/// squares they can be pushed to.
 pub fn piece_attacks(piece_kind: PieceKind, game: Game, square: Square) -> Bitboard {
     let side = if game.played_moves % 2 == 0 { WHITE } else { BLACK };
 
     return match piece_kind {
-        KING =>   king_attacks(&game, square, side),
-        ROOK =>   rook_attacks(&game, square, side),
-        QUEEN =>  queen_attacks(&game, square, side),
+        KING =>   {
+            neighborhood_attacks(&game, square, side, vec![Up, Right, Down, Left, UpLeft, UpRight, DownLeft, DownRight])
+        }
+        ROOK =>   {
+            slider_attacks(&game, square, side, vec![Up, Right, Down, Left])
+        }
+        QUEEN =>  {
+            slider_attacks(&game, square, side, vec![Up, Right, Down, Left, UpLeft, UpRight, DownRight, DownLeft])
+        }
+        BISHOP => {
+            slider_attacks(&game, square, side, vec![UpLeft, UpRight, DownRight, DownLeft])
+        }
         KNIGHT => knight_attacks(&game, square, side),
-        BISHOP => bishop_attacks(&game, square, side),
-        PAWN =>   king_attacks(&game, square, side),
+        PAWN =>   pawn_attacks(&game, square, side),
         _ => Bitboard::new(),
+    }
+}
+
+fn knight_attacks(game: &Game, s: Square, side: ColorSide) -> Bitboard {
+    let mut legal_squares: Vec<Square> = vec![];
+    for dir in [HorseUpLeft, HorseUpRight, HorseDownRight, HorseDownLeft, HorseLeftDown, HorseLeftUp, HorseRightDown, HorseRightUp] {
+        match s.get(&dir) {
+            Some(target) => {
+                match game.position.from_square(target) {
+                    None => legal_squares.push(target),
+                    Some(piece) => {
+                        if piece.color() != side {
+                            legal_squares.push(target)
+                        }
+                    }
+                }
+            }
+            None => {},
+        }
+    }
+
+    Bitboard::from_squares(legal_squares)   
+}
+
+fn pawn_attacks(game: &Game, s: Square, side: ColorSide) -> Bitboard {
+    if side == WHITE {
+        neighborhood_attacks(game, s, side, vec![UpLeft, UpRight])
+    } else {
+        neighborhood_attacks(game, s, side, vec![DownLeft, DownRight])
     }
 }
 
@@ -76,10 +119,15 @@ fn slider_attacks(
 
 }
 
-fn king_attacks(game: &Game, square: Square, side: ColorSide) -> Bitboard {
+fn neighborhood_attacks(
+    game: &Game,
+    s: Square,
+    side: ColorSide,
+    dirs: Vec<Dir>,
+) -> Bitboard {
     let mut legal_squares: Vec<Square> = vec![];
-    for dir in [Up, Right, Down, Left, UpLeft, UpRight, DownLeft, DownRight] {
-        match square.get(&dir) {
+    for dir in dirs {
+        match s.get(&dir) {
             Some(target) => {
                 match game.position.from_square(target) {
                     None => legal_squares.push(target),
@@ -95,38 +143,4 @@ fn king_attacks(game: &Game, square: Square, side: ColorSide) -> Bitboard {
     }
 
     Bitboard::from_squares(legal_squares)
-}
-
-fn rook_attacks(game: &Game, s: Square, side: ColorSide) -> Bitboard {
-    slider_attacks(game, s, side, vec![Up, Right, Down, Left])
-}
-
-fn bishop_attacks(game: &Game, s: Square, side: ColorSide) -> Bitboard {
-    slider_attacks(game, s, side, vec![UpLeft, UpRight, DownRight, DownLeft])
-}
-
-fn queen_attacks(game: &Game, s: Square, side: ColorSide) -> Bitboard {
-    rook_attacks(&game, s, side) | bishop_attacks(&game, s, side)
-}
-
-fn knight_attacks(game: &Game, s: Square, side: ColorSide) -> Bitboard {
-    let mut legal_squares: Vec<Square> = vec![];
-    for dir in [HorseUpLeft, HorseUpRight, HorseDownRight, HorseDownLeft, HorseLeftDown, HorseLeftUp, HorseRightDown, HorseRightUp] {
-        match s.get(&dir) {
-            Some(target) => {
-                match game.position.from_square(target) {
-                    None => legal_squares.push(target),
-                    Some(piece) => {
-                        println!("{side}");
-                        if piece.color() != side {
-                            legal_squares.push(target)
-                        }
-                    }
-                }
-            }
-            None => {},
-        }
-    }
-
-    Bitboard::from_squares(legal_squares)   
 }
