@@ -1,6 +1,7 @@
 use super::bitboard::{Bitboard, Bitwise};
 use super::game::Game;
 use super::position::Position;
+use super::piece::PieceKind;
 
 // N | -A -B -C -D -E -F -G -H  | N
 // --------------------------------
@@ -15,16 +16,34 @@ use super::position::Position;
 // --------------------------------
 // N | -A -B -C -D -E -F -G -H  | N
 
-
-pub fn rook_attacks(game: Game, index: u8) -> Bitboard {
+pub fn piece_attacks(piece_kind, PieceKind, game: Game, index: u8) {
     // true if it's white to move, false if it's
     // black to move.
     let side = game.played_moves & 2 == 0;
-    
-    legal_moves_horizonetally(&game.position, index-1, side, true) |
-    legal_moves_horizonetally(&game.position, index+1, side, false) |
-    legal_moves_vertically(&game.position, index+8, side, true) |
-    legal_moves_vertically(&game.position, index.saturating_sub(8), side, false) 
+
+    return match piece_kind {
+        King =>   king_atatcks(game, index, side),
+        Rook =>   rook_attacks(game, index, side),
+        Queen =>  queen_attacks(game, index, side),
+        Knight => knight_attacks(game, index, side),
+        Bishop => Bishop_attacks(game, index, side),
+        Pawn =>   pawn_attacks(game, index, side),
+    }
+}
+
+fn rook_attacks(game: Game, index: u8, side) -> Bitboard {
+    horizontall_moves(&game.position, index, side) |
+    verticall_moves(&game.position, index, side)
+}
+
+fn horizontall_moves(p: &Position, i: u8, side: bool) -> Bitboard {
+    legal_moves_horizonetally(&p, i-1, side, true) |
+    legal_moves_horizonetally(&p, i+1, side, false)
+}
+
+fn verticall_moves(p: &Position, i: u8, side: bool) -> Bitboard {
+    legal_moves_vertically(&p, i+8, side, true) |
+    legal_moves_vertically(&p, i.saturating_sub(8), side, false) 
 }
 
 fn legal_moves_vertically(p: &Position, i: u8, side: bool, dir: bool) -> Bitboard {

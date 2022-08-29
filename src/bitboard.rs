@@ -1,3 +1,8 @@
+use crate::color_side::ColorSide;
+use super::piece::*;
+use super::square::*;
+use super::color_side::*;
+
 /// Bitboard type is a 64-bit binary which
 /// each index of it represents following
 /// squares on a chess board.
@@ -20,7 +25,7 @@ pub type Bitboard = u64;
 
 /// defines functions to do bitwise operations 
 /// and indexing on bits.
-pub trait Bitwise {
+pub trait Bitboardable {
     // Prints a bitboard.
     fn draw(&self) {
         let mut out = "".to_string();
@@ -62,19 +67,19 @@ pub trait Bitwise {
     }
 
     /// Returns the bit (true or false) which is at 
-    /// index 'i' in self. (index starting from 0)
+    /// index square in self.
     ///
     /// # Examples
     ///
     /// ```
     /// let b: Bitboard = 0b0000000000000000000000000000000000000000000000000000000000000001;
     ///
-    /// assert_eq!(b.at(34), false);
-    // assert_eq!(b.at(63), true);
+    /// assert_eq!(b.at(F4), false);
+    /// assert_eq!(b.at(H8), true);
     /// ```
-    fn at(&self, i: u8) -> bool;
+    fn at(&self, s: Square) -> bool;
 
-    /// Sets the value of bit in index 'place' of
+    /// Sets the value of bit in index square of
     /// self to 'value'.
     /// 
     ///
@@ -83,27 +88,55 @@ pub trait Bitwise {
     /// ```
     /// let b: Bitboard = 0b0000000000000000000000000000000000000000000000000000000000000001;
     /// 
-    /// b.set(63, true)
-    /// assert_eq!(b.at(63), true);
+    /// b.set(H8, true)
+    /// assert_eq!(b.at(H8), true);
     /// 
-    /// b.set(63, false)
-    /// assert_eq!(b.at(63), false);
+    /// b.set(H8, false)
+    /// assert_eq!(b.at(H8), false);
     /// ```
-    fn set(&mut self, place: u8, value: bool);
-}
+    fn set(&mut self, square: u8, value: bool);
 
-impl Bitwise for Bitboard {
-    fn at(&self, i: u8) -> bool {
-        (self >> 63 - i & 1) != 0
+    /// Returns bitboard for given piece kind (both colors) 
+    /// from initial standard chess position.
+    fn initial_from_piece_kind(kind: PieceKind) -> Bitboard {
+        match kind {      // RANK 1 - RANK 2 - RANK 3 - RANK 4 - RANK 5 - RANK 6 - RANK 7 - RANK 8
+            PAWN =>   0b00000000_11111111_00000000_00000000_00000000_00000000_11111111_00000000,
+            KING =>   0b00001000_00000000_00000000_00000000_00000000_00000000_00000000_00001000,
+            ROOK =>   0b10000001_00000000_00000000_00000000_00000000_00000000_00000000_10000001,
+            QUEEN =>  0b00010000_00000000_00000000_00000000_00000000_00000000_00000000_00010000,
+            KNIGHT => 0b01000010_00000000_00000000_00000000_00000000_00000000_00000000_01000010,
+            BISHOP => 0b00100100_00000000_00000000_00000000_00000000_00000000_00000000_00100100,
+            _ =>          0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000,
+                          //ABCDEFGH_ABCDEFGH_ABCDEFGH_ABCDEFGH_ABCDEFGH_ABCDEFGH_ABCDEFGH_ABCDEFGH
+        }
     }
 
-    fn set(&mut self, place: u8, value: bool) {
-        if place <= 63 {
-            if value {
-                *self |= 1 << 63 - place;
-            } else {
-                *self &= !(1 << 63 - place);
-            }
+    /// Returns bitboard for given color side (all pieces)
+    /// from initial standard chess position.
+    fn initial_from_piece_color(color: ColorSide) -> Bitboard {
+        if color == WHITE {
+            0b11111111_11111111_00000000_00000000_00000000_00000000_00000000_00000000
+        } else if color == BLACK {
+            0b00000000_00000000_00000000_00000000_00000000_00000000_11111111_11111111
+        } else {
+            0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000
+        }
+    }
+}
+
+impl Bitboardable for Bitboard {
+    fn at(&self, s: Square) -> bool {
+        assert!(s < 64);
+
+        (self >> 63 - s & 1) != 0
+    }
+
+    fn set(&mut self, square: u8, value: bool) {
+        assert!(square < 64);
+        if value {
+            *self |= 1 << 63 - square;
+        } else {
+            *self &= !(1 << 63 - square);
         }
 	}
 }
@@ -111,29 +144,30 @@ impl Bitwise for Bitboard {
 
 #[cfg(test)]
 mod tests {
-    use super::{Bitboard, Bitwise};
+    use super::{Bitboard, Bitboardable};
+    use crate::square::*;
 
     #[test]
     fn at_fn() {
         let b1: Bitboard = 0b1101010111010101110101011101010111010101110101011101010111010101;
         let b2: Bitboard = 0b1010101110101011101010111010101110101011101010111010101110101011;
-        assert_eq!(b1.at(0), true);
-        assert_eq!(b1.at(7), true);
-        assert_eq!(b2.at(1), false);
-        assert_eq!(b2.at(6), true);
+        assert_eq!(b1.at(H1), true);
+        assert_eq!(b1.at(H1), true);
+        assert_eq!(b2.at(B1), false);
+        assert_eq!(b2.at(G1), true);
     }
 
     #[test]
     fn set_fn() {
         let mut b1: Bitboard = 0b0000000000000000000000000000000000000000000000000000000000000000;
-        b1.set(0, true);
-        assert_eq!(b1.at(0), true);
-        b1.set(0, false);
-        assert_eq!(b1.at(0), false);
+        b1.set(A1, true);
+        assert_eq!(b1.at(A1), true);
+        b1.set(A1, false);
+        assert_eq!(b1.at(A1), false);
         let mut b2: Bitboard = 0b1111111111111111111111111111111111111111111111111111111111111111;
-        b2.set(63, true);
-        assert_eq!(b2.at(63), true);
-        b2.set(0, false);
-        assert_eq!(b2.at(0), false);
+        b2.set(H8, true);
+        assert_eq!(b2.at(H8), true);
+        b2.set(A1, false);
+        assert_eq!(b2.at(A1), false);
     }
 }
